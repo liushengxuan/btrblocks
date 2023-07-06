@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -27,6 +28,7 @@ struct Vector {
   Vector() : data(nullptr) {}
   explicit Vector(uint64_t count) : count(count), data(new T[count]) {}
   explicit Vector(const char* pathname) { readBinary(pathname); }
+  explicit Vector(const char* pathname, int32_t wordSize) { readBinaryInLine(pathname, int32_t wordSize); }
   Vector(const Vector&) = delete;
   Vector(Vector&& o) noexcept : count(o.count), data(o.data) {
     o.count = 0;
@@ -52,6 +54,32 @@ struct Vector {
     die_if(read(fd, data, sb.st_size) == sb.st_size);
     die_if(close(fd) == 0);
   }
+
+  void readBinaryInLine(const char* pathname, int32_t wordSize) {
+    std::ifstream fin(pathname);
+    int length = 1024;
+    int wordCount = 0;
+    auto inputBuf = new T[length];
+//    auto inputBuf = new T[count];
+    T temp;
+
+    while (fin >> temp)
+    {
+      inputBuf[wordCount] = temp;
+      wordCount ++;
+      if(wordCount == length) {
+        auto newInputBuf = new T[length * 2];
+        memcpy(newInputBuf, inputBuf, length * wordSize);
+        length = length * 2;
+        delete[] inputBuf;
+        inputBuf = newInputBuf;
+      }
+    }
+    count = wordCount;
+    data = inputBuf;
+  }
+
+
 
   [[nodiscard]] uint64_t size() const { return count; }
   T& operator[](std::size_t idx) { return data[idx]; }
