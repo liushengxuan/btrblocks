@@ -28,7 +28,7 @@ struct Vector {
   Vector() : data(nullptr) {}
   explicit Vector(uint64_t count) : count(count), data(new T[count]) {}
   explicit Vector(const char* pathname) { readBinary(pathname); }
-  explicit Vector(const char* pathname, int32_t wordSize) { readBinaryInLine(pathname, int32_t wordSize); }
+  explicit Vector(const char* pathname, int32_t wordSize) { readBinaryInLine(pathname, wordSize); }
   Vector(const Vector&) = delete;
   Vector(Vector&& o) noexcept : count(o.count), data(o.data) {
     o.count = 0;
