@@ -104,33 +104,33 @@ int main(int argc, char *argv[]) {
         << "- output size " << stats.total_data_size << std::endl
         << "- compression ratio " << stats.compression_ratio << std::endl
         ;
-//
-//
-//    // -------------------------------------------------------------------------------------
-//    // decompression
-//    // -------------------------------------------------------------------------------------
-//    Chunk decompressed = compressor.decompress(output);
-//
-//    // check if the decompressed data is the same as the original data
-//    bool check;
-//    for (auto col = 0u; col != to_compress.columns.size(); ++col) {
-//        auto& orig = input.columns[col];
-//        auto& decomp = decompressed.columns[col];
-//        switch (to_compress.columns[col].type) {
-//            case ColumnType::INTEGER:
-//              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
-//                                   reinterpret_cast<int32_t*>(decomp.get()));
-//              break;
-//            case ColumnType::DOUBLE:
-//              check = validateData(size, reinterpret_cast<double*>(orig.get()),
-//                                   reinterpret_cast<double*>(decomp.get()));
-//              break;
-//            default:
-//              UNREACHABLE();
-//        }
-//    }
-//    std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
-//    return !check;
+
+
+    // -------------------------------------------------------------------------------------
+    // decompression
+    // -------------------------------------------------------------------------------------
+    Chunk decompressed = compressor.decompress(output);
+
+    // check if the decompressed data is the same as the original data
+    bool check;
+    for (auto col = 0u; col != to_compress.columns.size(); ++col) {
+        auto& orig = input.columns[col];
+        auto& decomp = decompressed.columns[col];
+        switch (to_compress.columns[col].type) {
+            case ColumnType::INTEGER:
+              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
+                                   reinterpret_cast<int32_t*>(decomp.get()));
+              break;
+            case ColumnType::DOUBLE:
+              check = validateData(size, reinterpret_cast<double*>(orig.get()),
+                                   reinterpret_cast<double*>(decomp.get()));
+              break;
+            default:
+              UNREACHABLE();
+        }
+    }
+    std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
+    return !check;
 
 
 
