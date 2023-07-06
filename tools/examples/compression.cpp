@@ -5,6 +5,9 @@
 #include "common/Log.hpp"
 #include "storage/MMapVector.hpp"
 #include "storage/Relation.hpp"
+
+#include <chrono>
+
 // ------------------------------------------------------------------------------
 template<typename T>
 btrblocks::Vector<T> generateData(size_t size, size_t unique, size_t runlength, int seed = 42) {
@@ -113,6 +116,7 @@ int main(int argc, char *argv[]) {
 
     // check if the decompressed data is the same as the original data
     bool check;
+    auto startTime = std::chrono::high_resolution_clock::now();
     for (auto col = 0u; col != to_compress.columns.size(); ++col) {
         auto& orig = input.columns[col];
         auto& decomp = decompressed.columns[col];
@@ -129,6 +133,12 @@ int main(int argc, char *argv[]) {
               UNREACHABLE();
         }
     }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(
+                    endTime - startTime)
+                    .count();
+    std::cout << "decompression time: " << time << " us" <<std::endl;
     std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
     return !check;
 
