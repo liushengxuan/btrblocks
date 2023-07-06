@@ -77,33 +77,33 @@ int main(int argc, char *argv[]) {
     Relation to_compress;
 //    auto column = Column("ints", std::move(ints));
 //    to_compress.addColumn({"ints", std::move(ints)});
-    to_compress.addColumn({"dbls", loadData<int>("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt")});
+    to_compress.addColumn({"ints", loadData<int>("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt")});
 
 
 //    // usually we would split up the data into multiple chunks here using Relation::getRanges
 //    // and then compress each one individually (in parallel).
 //    // Here, we just compress the whole column at once.
-//    Range range(0, to_compress.tuple_count);
-//    Chunk input = to_compress.getChunk({range}, 0);
-//    Datablock compressor(to_compress);
+    Range range(0, to_compress.tuple_count);
+    Chunk input = to_compress.getChunk({range}, 0);
+    Datablock compressor(to_compress);
 //
 //    // allocate some memory for the output; if this is passed as null,
 //    // the compressor will allocate the memory itself, estimating required space
 //    // passing too little memory here can lead to a crash/UB; memory bounds are not checked.
-//    std::unique_ptr<uint8_t[]> output(new uint8_t[input.tuple_count * sizeof(double) * 2]);
+    std::unique_ptr<uint8_t[]> output(new uint8_t[input.tuple_count * sizeof(double) * 2]);
 //
 //    // compress the data; return value contains some statistics about the
 //    // overall compression, used schemes and individual columns
-//    auto stats = compressor.compress(input, output);
+    auto stats = compressor.compress(input, output);
 //
 //    // compile with BTR_FLAG_LOGGING (cmake -DWITH_LOGGING=ON ..) to
 //    // get more insights into the compression process
 //    // the
-//    std::cout << "Stats:" <<  std::endl
-//        << "- input size " << input.size_bytes() << std::endl
-//        << "- output size " << stats.total_data_size << std::endl
-//        << "- compression ratio " << stats.compression_ratio << std::endl
-//        ;
+    std::cout << "Stats:" <<  std::endl
+        << "- input size " << input.size_bytes() << std::endl
+        << "- output size " << stats.total_data_size << std::endl
+        << "- compression ratio " << stats.compression_ratio << std::endl
+        ;
 //
 //
 //    // -------------------------------------------------------------------------------------
