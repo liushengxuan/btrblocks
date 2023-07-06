@@ -7,6 +7,9 @@
 #include "storage/Relation.hpp"
 
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
 
 // ------------------------------------------------------------------------------
 template<typename T>
@@ -43,6 +46,8 @@ bool validateData(size_t size, T* input, T* output) {
 // ------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
     using namespace btrblocks;
+    std::vector<std::string> fullFilePaths;
+    std::unordered_map<std::string, uint64_t> uncompressedSizes, compressedSizes, compressTimes, uncompressTimes;
     // required before interacting with btrblocks
     // the passed function is optional and can be used to modify the
     // configuration before BtrBlocks initializes itself
@@ -66,21 +71,19 @@ int main(int argc, char *argv[]) {
     // compression
     // -------------------------------------------------------------------------------------
 
-    // initialize some data with runs of numbers
-    size_t size = 64;
-    size_t runlength = getenv("runlength") ? atoi(getenv("runlength")) : 40;
-    size_t unique = getenv("unique") ? atoi(getenv("unique")) : ((1 << 12) - 1);
 
-//    auto ints = Vector<unsigned int> ("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt", 4);
-//    for (int i=0; i<ints.size(); i++) {
-//      std::cout<<ints.data[i]<<std::endl;
-//    }
-
+    std::string folder_path = "/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/";
+    for (const auto &entry : std::filesystem::directory_iterator(folder_path)) {
+      if (!entry.is_regular_file()) continue;
+      std::ifstream file(entry.path());
+      fullFilePaths.push_back(folder_path + entry.path().filename().string());
+    }
 
     Relation to_compress;
-//    auto column = Column("ints", std::move(ints));
-//    to_compress.addColumn({"ints", std::move(ints)});
-    to_compress.addColumn({"ints", loadData<int>("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt")});
+
+    for(auto file: fullFilePaths) {
+      to_compress.addColumn({file, loadData<int>(file.c_str())});
+    }
 
 
 //    // usually we would split up the data into multiple chunks here using Relation::getRanges
@@ -140,13 +143,11 @@ int main(int argc, char *argv[]) {
                     .count();
     std::cout << "decompression time: " << time << " us" <<std::endl;
     std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
+
+
+
+
     return !check;
 
-
-
-
-
-
-    return 0;
 }
 // ------------------------------------------------------------------------------
