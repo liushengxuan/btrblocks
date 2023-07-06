@@ -18,6 +18,13 @@ btrblocks::Vector<T> generateData(size_t size, size_t unique, size_t runlength, 
     }
     return data;
 }
+
+template<typename T>
+btrblocks::Vector<T> loadData(const char* filepath) {
+  btrblocks::Vector<T> data("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt", sizeof(T));
+  return data;
+}
+
 // ------------------------------------------------------------------------------
 template <typename T>
 bool validateData(size_t size, T* input, T* output) {
@@ -61,16 +68,16 @@ int main(int argc, char *argv[]) {
     size_t runlength = getenv("runlength") ? atoi(getenv("runlength")) : 40;
     size_t unique = getenv("unique") ? atoi(getenv("unique")) : ((1 << 12) - 1);
 
-    auto ints = Vector<uint32_t> ("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt", 4);
-    for (int i=0; i<ints.size(); i++) {
-      std::cout<<ints.data[i]<<std::endl;
-    }
+//    auto ints = Vector<unsigned int> ("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt", 4);
+//    for (int i=0; i<ints.size(); i++) {
+//      std::cout<<ints.data[i]<<std::endl;
+//    }
 
 
-
-//    Relation to_compress;
-//    to_compress.addColumn({"ints", generateData<int32_t>(size, unique, runlength, 42)});
-//    to_compress.addColumn({"dbls", generateData<double>(size, unique, runlength, 69)});
+    Relation to_compress;
+//    auto column = Column("ints", std::move(ints));
+//    to_compress.addColumn({"ints", std::move(ints)});
+    to_compress.addColumn({"dbls", loadData<int>("/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/_6289ac_0.txt")});
 
 
 //    // usually we would split up the data into multiple chunks here using Relation::getRanges
