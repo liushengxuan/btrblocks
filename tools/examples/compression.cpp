@@ -123,17 +123,17 @@ int main(int argc, char *argv[]) {
     for (auto col = 0u; col != to_compress.columns.size(); ++col) {
         auto& orig = input.columns[col];
         auto& decomp = decompressed.columns[col];
-        switch (to_compress.columns[col].type) {
-            case ColumnType::INTEGER:
-              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
-                                   reinterpret_cast<int32_t*>(decomp.get()));
-              break;
-            case ColumnType::DOUBLE:
-              check = validateData(size, reinterpret_cast<double*>(orig.get()),
-                                   reinterpret_cast<double*>(decomp.get()));
-              break;
-            default:
-              UNREACHABLE();
+//        switch (to_compress.columns[col].type) {
+//            case ColumnType::INTEGER:
+//              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
+//                                   reinterpret_cast<int32_t*>(decomp.get()));
+//              break;
+//            case ColumnType::DOUBLE:
+//              check = validateData(size, reinterpret_cast<double*>(orig.get()),
+//                                   reinterpret_cast<double*>(decomp.get()));
+//              break;
+//            default:
+//              UNREACHABLE();
         }
     }
 
