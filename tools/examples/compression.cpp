@@ -115,11 +115,12 @@ int main(int argc, char *argv[]) {
     // -------------------------------------------------------------------------------------
     // decompression
     // -------------------------------------------------------------------------------------
+    auto startTime = std::chrono::high_resolution_clock::now();
     Chunk decompressed = compressor.decompress(output);
 
     // check if the decompressed data is the same as the original data
     bool check;
-    auto startTime = std::chrono::high_resolution_clock::now();
+
     for (auto col = 0u; col != to_compress.columns.size(); ++col) {
         auto& orig = input.columns[col];
         auto& decomp = decompressed.columns[col];
