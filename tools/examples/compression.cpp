@@ -47,17 +47,21 @@ bool validateData(size_t size, T* input, T* output) {
 int main(int argc, char *argv[]) {
     using namespace btrblocks;
     std::vector<std::string> fullFilePaths;
+    std::string column;
+    std::string folder_path_base = "/data00/velox_reader_benchmark/parquet_playground/6289ac/";
+
     std::unordered_map<std::string, uint64_t> uncompressedSizes, compressedSizes, compressTimes, uncompressTimes;
     // required before interacting with btrblocks
     // the passed function is optional and can be used to modify the
     // configuration before BtrBlocks initializes itself
     BtrBlocksConfig::configure([&](BtrBlocksConfig &config){
         if (argc > 1) {
-            auto max_depth  = std::atoi(argv[1]);
-            std::cout << "setting max cascade depth to " << max_depth << std::endl;
-            config.integers.max_cascade_depth = max_depth;
-            config.doubles.max_cascade_depth = max_depth;
-            config.strings.max_cascade_depth = max_depth;
+//            auto max_depth  = std::atoi(argv[1]);
+//            std::cout << "setting max cascade depth to " << max_depth << std::endl;
+//            config.integers.max_cascade_depth = max_depth;
+//            config.doubles.max_cascade_depth = max_depth;
+//            config.strings.max_cascade_depth = max_depth;
+            column = argv[1];
         }
         config.doubles.schemes.enable(DoubleSchemeType::DOUBLE_BP);
     });
@@ -72,7 +76,7 @@ int main(int argc, char *argv[]) {
     // -------------------------------------------------------------------------------------
 
 
-    std::string folder_path = "/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/";
+    std::string folder_path = folder_path_base + column + "/";
     for (const auto &entry : std::filesystem::directory_iterator(folder_path)) {
       if (!entry.is_regular_file()) continue;
       std::ifstream file(entry.path());
@@ -143,8 +147,7 @@ int main(int argc, char *argv[]) {
                     endTime - startTime)
                     .count();
     std::cout << "decompression time: " << time << " us" <<std::endl;
-    std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
-
+    std::cout << "decompression throughput: " << (double) stats.total_data_size/1024/1024/(double)time *1000*1000 << " MB/s" << std::endl;
 
 
 
