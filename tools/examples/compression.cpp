@@ -46,9 +46,6 @@ bool validateData(size_t size, T* input, T* output) {
 // ------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
     using namespace btrblocks;
-    std::vector<std::string> columns = {"orderkey", "partkey", "suppkey", "linenumber", "quantity", "extendedprice", "discount", "tax", "returnflag", "linestatus", "shipdate", "commitdate", "receiptdate", "shipinstruct", "shipmode", "comment"};
-    std::string folder_path_base = "/data00/velox_reader_benchmark/parquet_playground/6289ac/";
-
     std::vector<std::string> fullFilePaths;
     std::unordered_map<std::string, uint64_t> uncompressedSizes, compressedSizes, compressTimes, uncompressTimes;
     // required before interacting with btrblocks
@@ -74,82 +71,84 @@ int main(int argc, char *argv[]) {
     // compression
     // -------------------------------------------------------------------------------------
 
-    for(auto col : columns) {
-      std::cout<<"-------------- column: " << col << " -------------- " << std::endl;
-      std::string folder_path = folder_path_base + col + "/";
-      for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
-        if (!entry.is_regular_file())
-          continue;
-        std::ifstream file(entry.path());
-        fullFilePaths.push_back(folder_path + entry.path().filename().string());
-      }
 
-      Relation to_compress;
-
-      for (auto file : fullFilePaths) {
-        to_compress.addColumn({file, loadData<int>(file.c_str())});
-      }
-
-      //    // usually we would split up the data into multiple chunks here using Relation::getRanges
-      //    // and then compress each one individually (in parallel).
-      //    // Here, we just compress the whole column at once.
-      Range range(0, to_compress.tuple_count);
-      Chunk input = to_compress.getChunk({range}, 0);
-      Datablock compressor(to_compress);
-      //
-      //    // allocate some memory for the output; if this is passed as null,
-      //    // the compressor will allocate the memory itself, estimating required space
-      //    // passing too little memory here can lead to a crash/UB; memory bounds are not checked.
-      std::unique_ptr<uint8_t[]> output(new uint8_t[input.tuple_count * sizeof(double) * 2]);
-      //
-      //    // compress the data; return value contains some statistics about the
-      //    // overall compression, used schemes and individual columns
-      auto stats = compressor.compress(input, output);
-      //
-      //    // compile with BTR_FLAG_LOGGING (cmake -DWITH_LOGGING=ON ..) to
-      //    // get more insights into the compression process
-      //    // the
-      std::cout << "Stats:" << std::endl
-                << "- input size " << input.size_bytes() << std::endl
-                << "- output size " << stats.total_data_size << std::endl
-                << "- compression ratio " << stats.compression_ratio << std::endl;
-
-      // -------------------------------------------------------------------------------------
-      // decompression
-      // -------------------------------------------------------------------------------------
-      auto startTime = std::chrono::high_resolution_clock::now();
-      Chunk decompressed = compressor.decompress(output);
-
-      // check if the decompressed data is the same as the original data
-      bool check;
-
-      for (auto col = 0u; col != to_compress.columns.size(); ++col) {
-        auto& orig = input.columns[col];
-        auto& decomp = decompressed.columns[col];
-        //        switch (to_compress.columns[col].type) {
-        //            case ColumnType::INTEGER:
-        //              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
-        //                                   reinterpret_cast<int32_t*>(decomp.get()));
-        //              break;
-        //            case ColumnType::DOUBLE:
-        //              check = validateData(size, reinterpret_cast<double*>(orig.get()),
-        //                                   reinterpret_cast<double*>(decomp.get()));
-        //              break;
-        //            default:
-        //              UNREACHABLE();
-        //        }
-      }
-
-      auto endTime = std::chrono::high_resolution_clock::now();
-      auto time =
-          std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
-      std::cout << "decompression time: " << time << " us" << std::endl;
-      std::cout << (check ? "decompressed data matches original data"
-                          : "decompressed data does not match original data")
-                << std::endl;
+    std::string folder_path = "/data00/velox_reader_benchmark/parquet_playground/6289ac/orderkey/";
+    for (const auto &entry : std::filesystem::directory_iterator(folder_path)) {
+      if (!entry.is_regular_file()) continue;
+      std::ifstream file(entry.path());
+      fullFilePaths.push_back(folder_path + entry.path().filename().string());
     }
 
-    return 0;
+    Relation to_compress;
+
+    for(auto file: fullFilePaths) {
+      to_compress.addColumn({file, loadData<int>(file.c_str())});
+    }
+
+
+//    // usually we would split up the data into multiple chunks here using Relation::getRanges
+//    // and then compress each one individually (in parallel).
+//    // Here, we just compress the whole column at once.
+    Range range(0, to_compress.tuple_count);
+    Chunk input = to_compress.getChunk({range}, 0);
+    Datablock compressor(to_compress);
+//
+//    // allocate some memory for the output; if this is passed as null,
+//    // the compressor will allocate the memory itself, estimating required space
+//    // passing too little memory here can lead to a crash/UB; memory bounds are not checked.
+    std::unique_ptr<uint8_t[]> output(new uint8_t[input.tuple_count * sizeof(double) * 2]);
+//
+//    // compress the data; return value contains some statistics about the
+//    // overall compression, used schemes and individual columns
+    auto stats = compressor.compress(input, output);
+//
+//    // compile with BTR_FLAG_LOGGING (cmake -DWITH_LOGGING=ON ..) to
+//    // get more insights into the compression process
+//    // the
+    std::cout << "Stats:" <<  std::endl
+        << "- input size " << input.size_bytes() << std::endl
+        << "- output size " << stats.total_data_size << std::endl
+        << "- compression ratio " << stats.compression_ratio << std::endl
+        ;
+
+
+    // -------------------------------------------------------------------------------------
+    // decompression
+    // -------------------------------------------------------------------------------------
+    auto startTime = std::chrono::high_resolution_clock::now();
+    Chunk decompressed = compressor.decompress(output);
+
+    // check if the decompressed data is the same as the original data
+    bool check;
+
+    for (auto col = 0u; col != to_compress.columns.size(); ++col) {
+        auto& orig = input.columns[col];
+        auto& decomp = decompressed.columns[col];
+//        switch (to_compress.columns[col].type) {
+//            case ColumnType::INTEGER:
+//              check = validateData(size, reinterpret_cast<int32_t*>(orig.get()),
+//                                   reinterpret_cast<int32_t*>(decomp.get()));
+//              break;
+//            case ColumnType::DOUBLE:
+//              check = validateData(size, reinterpret_cast<double*>(orig.get()),
+//                                   reinterpret_cast<double*>(decomp.get()));
+//              break;
+//            default:
+//              UNREACHABLE();
+//        }
+    }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::microseconds>(
+                    endTime - startTime)
+                    .count();
+    std::cout << "decompression time: " << time << " us" <<std::endl;
+    std::cout << (check ? "decompressed data matches original data" : "decompressed data does not match original data") << std::endl;
+
+
+
+
+    return !check;
 
 }
 // ------------------------------------------------------------------------------
